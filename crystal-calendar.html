@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Crystal — April 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A96E;
+    --gold-light: #E8D5B0;
+    --gold-pale: #F7F0E3;
+    --navy: #1A1F2E;
+    --navy-mid: #2D3550;
+    --cream: #FAF6EE;
+    --text-dark: #1A1F2E;
+    --text-mid: #4A4057;
+    --text-light: #8A7E9A;
+    --border: rgba(201,169,110,0.25);
+    --locked: #D1C9BD;
+  }
+
+  body {
+    background: var(--cream);
+    color: var(--text-dark);
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Password Gate ── */
+  #gate {
+    position: fixed; inset: 0;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 9999;
+    transition: opacity 0.8s ease;
+  }
+  #gate.fade-out { opacity: 0; pointer-events: none; }
+
+  .gate-inner {
+    text-align: center;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+  }
+
+  .gate-monogram {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 72px;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.08em;
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  .gate-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--gold-light);
+    letter-spacing: 0.15em;
+    margin-bottom: 2.5rem;
+    opacity: 0.7;
+  }
+
+  .gate-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    opacity: 0.6;
+  }
+
+  #pw-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(201,169,110,0.4);
+    border-radius: 4px;
+    padding: 14px 18px;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    color: white;
+    letter-spacing: 0.1em;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+  #pw-input:focus { border-color: var(--gold); }
+  #pw-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  #pw-btn {
+    margin-top: 1rem;
+    width: 100%;
+    background: var(--gold);
+    border: none;
+    border-radius: 4px;
+    padding: 14px;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--navy);
+    cursor: pointer;
+    transition: background 0.3s, transform 0.15s;
+  }
+  #pw-btn:hover { background: var(--gold-light); }
+  #pw-btn:active { transform: scale(0.98); }
+
+  #pw-error {
+    margin-top: 0.75rem;
+    font-size: 12px;
+    color: #E08080;
+    letter-spacing: 0.05em;
+    min-height: 18px;
+  }
+
+  /* ── Stars bg on gate ── */
+  .stars {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(201,169,110,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 70%, rgba(201,169,110,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 20%, rgba(201,169,110,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 80%, rgba(201,169,110,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 60%, rgba(255,255,255,0.15) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 50% 15%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 50%, rgba(255,255,255,0.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 40%, rgba(201,169,110,0.2) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  /* ── Page ── */
+  #page { display: none; }
+  #page.visible { display: block; animation: fadeUp 1s ease forwards; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Declaration banner ── */
+  .declaration {
+    background: var(--navy);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .declaration::before, .declaration::after {
+    content: '';
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    width: 120px; height: 0.5px;
+    background: var(--gold);
+    opacity: 0.5;
+  }
+  .declaration::before { top: 1.25rem; }
+  .declaration::after { bottom: 1.25rem; }
+
+  .declaration-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(17px, 3vw, 22px);
+    font-weight: 300;
+    color: var(--gold-light);
+    line-height: 1.75;
+    max-width: 700px;
+    margin: 0 auto;
+    letter-spacing: 0.03em;
+  }
+
+  .declaration-icon {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--gold);
+    opacity: 0.6;
+    margin-bottom: 1rem;
+    letter-spacing: 0.3em;
+  }
+
+  /* ── Month header ── */
+  .month-header {
+    padding: 2.5rem 2rem 1rem;
+    text-align: center;
+  }
+
+  .month-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    color: var(--navy);
+    letter-spacing: 0.12em;
+    line-height: 1;
+  }
+
+  .month-year {
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    color: var(--text-light);
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+
+  .month-divider {
+    width: 60px; height: 0.5px;
+    background: var(--gold);
+    margin: 1.25rem auto 0;
+    opacity: 0.6;
+  }
+
+  /* ── Week headers ── */
+  .week-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    padding: 1rem 1.5rem 0.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .week-label {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-light);
+    text-transform: uppercase;
+    padding: 0.5rem 0;
+  }
+
+  /* ── Calendar grid ── */
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    padding: 0.5rem 1.5rem 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .day-cell {
+    aspect-ratio: 1;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: white;
+    position: relative;
+    min-height: 70px;
+  }
+
+  .day-cell.empty {
+    background: transparent;
+    border: none;
+    cursor: default;
+  }
+
+  .day-cell.unlocked:hover {
+    border-color: var(--gold);
+    background: var(--gold-pale);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(201,169,110,0.15);
+  }
+
+  .day-cell.today {
+    border-color: var(--gold);
+    background: var(--navy);
+  }
+
+  .day-cell.today .day-num { color: var(--gold-light); }
+
+  .day-cell.locked {
+    background: #F9F7F4;
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  .day-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--navy);
+    line-height: 1;
+  }
+
+  .day-cell.locked .day-num { color: var(--locked); }
+
+  .day-icon {
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: 0.5;
+  }
+
+  .unlock-icon { color: var(--gold); }
+  .lock-icon { color: var(--locked); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,31,46,0.85);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--cream);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 580px;
+    max-height: 88vh;
+    overflow-y: auto;
+    transform: translateY(30px) scale(0.97);
+    transition: transform 0.35s ease;
+    position: relative;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-top {
+    background: var(--navy);
+    padding: 2rem 2rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+    text-align: center;
+  }
+
+  .modal-day-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+  }
+
+  .modal-day-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px;
+    color: var(--gold-light);
+    line-height: 1;
+  }
+
+  .modal-month {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--gold);
+    opacity: 0.6;
+    letter-spacing: 0.15em;
+    margin-top: 0.25rem;
+  }
+
+  .modal-body { padding: 1.75rem 2rem; }
+
+  /* ── Video placeholder ── */
+  .video-zone {
+    background: var(--navy-mid);
+    border-radius: 8px;
+    aspect-ratio: 16/9;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin-bottom: 1.75rem;
+    border: 0.5px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .video-placeholder-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    color: rgba(201,169,110,0.5);
+    letter-spacing: 0.1em;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .video-play-icon {
+    width: 48px; height: 48px;
+    border: 1.5px solid rgba(201,169,110,0.4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .video-play-icon::after {
+    content: '';
+    border-left: 14px solid rgba(201,169,110,0.5);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    margin-left: 3px;
+  }
+
+  /* ── Message ── */
+  .message-section { margin-bottom: 1.5rem; }
+
+  .message-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    opacity: 0.8;
+  }
+
+  .message-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    line-height: 1.85;
+    color: var(--text-dark);
+    font-weight: 300;
+  }
+
+  /* ── Scripture ── */
+  .scripture-box {
+    background: var(--navy);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    border-left: 2px solid var(--gold);
+  }
+
+  .scripture-verse {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--gold-light);
+    margin-bottom: 0.5rem;
+  }
+
+  .scripture-ref {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+
+  /* ── Close ── */
+  .modal-close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(201,169,110,0.3);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold-light);
+    font-size: 16px;
+    transition: background 0.2s;
+    line-height: 1;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.15); }
+
+  /* ── Footer ── */
+  .page-footer {
+    text-align: center;
+    padding: 1rem 2rem 2.5rem;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--text-light);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 600px) {
+    .calendar { padding: 0.5rem 0.75rem 3rem; gap: 5px; }
+    .week-labels { padding: 1rem 0.75rem 0.5rem; }
+    .day-cell { min-height: 48px; border-radius: 6px; }
+    .day-num { font-size: 16px; }
+    .modal-body { padding: 1.25rem 1.25rem; }
+    .modal-top { padding: 1.5rem 1.25rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── PASSWORD GATE ── -->
+<div id="gate">
+  <div class="stars"></div>
+  <div class="gate-inner">
+    <div class="gate-monogram">✦</div>
+    <p class="gate-sub">a private place, made for you</p>
+    <p class="gate-label">Enter your access word</p>
+    <input type="password" id="pw-input" placeholder="••••••••" autocomplete="off" />
+    <button id="pw-btn">Enter</button>
+    <p id="pw-error"></p>
+  </div>
+</div>
+
+<!-- ── MAIN PAGE ── -->
+<div id="page">
+
+  <!-- Declaration -->
+  <div class="declaration">
+    <p class="declaration-icon">✦ &nbsp; ✦ &nbsp; ✦</p>
+    <p class="declaration-text">
+      Crystal, may the Lord bless you, guide you, and remind you that I am always here walking this journey with you.
+    </p>
+  </div>
+
+  <!-- Month header -->
+  <div class="month-header">
+    <div class="month-name">April</div>
+    <div class="month-year">2026</div>
+    <div class="month-divider"></div>
+  </div>
+
+  <!-- Week labels -->
+  <div class="week-labels">
+    <div class="week-label">Sun</div>
+    <div class="week-label">Mon</div>
+    <div class="week-label">Tue</div>
+    <div class="week-label">Wed</div>
+    <div class="week-label">Thu</div>
+    <div class="week-label">Fri</div>
+    <div class="week-label">Sat</div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar" id="calendar"></div>
+
+  <p class="page-footer">Private · Made with love · April 2026</p>
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-top">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div class="modal-day-label">Day</div>
+      <div class="modal-day-num" id="modal-day-num">1</div>
+      <div class="modal-month">April 2026</div>
+    </div>
+    <div class="modal-body">
+      <div class="video-zone" id="video-zone">
+        <div class="video-play-icon"></div>
+        <p class="video-placeholder-text" id="video-label">Video for Day 1</p>
+      </div>
+      <div class="message-section">
+        <div class="message-label">A word for today</div>
+        <p class="message-text" id="modal-message"></p>
+      </div>
+      <div class="scripture-box">
+        <p class="scripture-verse" id="modal-verse"></p>
+        <p class="scripture-ref" id="modal-ref"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Password ──
+const PASSWORD = "crystal2026"; // Change to your preferred password
+
+document.getElementById('pw-btn').addEventListener('click', checkPassword);
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+function checkPassword() {
+  const val = document.getElementById('pw-input').value.trim();
+  if (val === PASSWORD) {
+    const gate = document.getElementById('gate');
+    gate.classList.add('fade-out');
+    setTimeout(() => {
+      gate.style.display = 'none';
+      const page = document.getElementById('page');
+      page.style.display = 'block';
+      page.classList.add('visible');
+    }, 800);
+  } else {
+    document.getElementById('pw-error').textContent = 'That\'s not it — try again, love.';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+// ── Day data ──
+// April 2026 starts on Wednesday (day index 3, 0=Sun)
+const MONTH_START_DOW = 3; // Wednesday
+const DAYS_IN_MONTH = 30;
+
+// Today's date
+const today = new Date();
+const todayDay = (today.getFullYear() === 2026 && today.getMonth() === 3) ? today.getDate() : 999;
+
+const dayData = {
+  1: {
+    message: "My Crystal — welcome to Day 1 of April. These seven months together have been nothing short of sacred to me. In Hebrew, the number seven — שֶׁבַע (sheva) — represents completion and divine perfection. That is exactly what you are to me: a completeness I did not know I was missing. Your cycle can be hard some days, and I want you to know I see you through every single one of them. You are not too much. You are exactly enough.",
+    verse: "The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing.",
+    ref: "Zephaniah 3:17"
+  },
+  2: {
+    message: "Good morning, my love. I thought about you before I even got out of bed this morning. Seven months of waking up knowing you exist in my world — that alone changes everything. If today feels heavy in your body, let your spirit rest here. Every ache your cycle brings is something we carry together. I am not going anywhere.",
+    verse: "Cast your burden on the Lord, and he will sustain you; he will never permit the righteous to be moved.",
+    ref: "Psalm 55:22"
+  },
+  3: {
+    message: "Crystal, today I just want to remind you of something simple: you are deeply, genuinely loved. Not for what you produce or how you feel or what your body does — but for who you are in your quietest, most honest moments. The Lord sees those moments. So do I. Today, breathe easy.",
+    verse: "I have loved you with an everlasting love; I have drawn you with unfailing kindness.",
+    ref: "Jeremiah 31:3"
+  },
+  4: {
+    message: "There is something beautiful about how we have found rhythm together — even in the uneven seasons. Your cycle is one of those seasons, and I have learned that it is not something to fix or rush. It is something to honor. Today, give your body grace. Give yourself the gentleness you so freely pour into others.",
+    verse: "She is clothed with strength and dignity, and she laughs without fear of the future.",
+    ref: "Proverbs 31:25"
+  },
+  5: {
+    message: "My love — five days into April and I am already so grateful for you. Seven months of learning what makes your eyes light up, what makes you laugh without warning, what you need when the world feels like too much. Every day I learn more. Every day I choose you more intentionally. Today, know that you are chosen.",
+    verse: "You did not choose me, but I chose you — and I have called you by name; you are mine.",
+    ref: "John 15:16 / Isaiah 43:1"
+  },
+  6: {
+    message: "On difficult cycle days, the body can feel like an enemy. But Crystal, your body has carried you through every storm you have ever faced — and it is still here, still fighting for you. Today I am fighting for you too. Drink water. Rest when you need to. And know that someone on the other side of the day is thinking of you.",
+    verse: "Do you not know that your bodies are temples of the Holy Spirit, who is in you — therefore honor God with your bodies.",
+    ref: "1 Corinthians 6:19–20"
+  },
+  7: {
+    message: "Seven days. Seven — the number the Hebrew scriptures use for wholeness, for completion, for covenant. Today marks one week of April, and one thing I know without question: our journey together is covered by something greater than us. On the hard days and the good ones, we are held. You are held, Crystal.",
+    verse: "The Lord bless you and keep you; the Lord make his face shine on you and be gracious to you; the Lord turn his face toward you and give you peace.",
+    ref: "Numbers 6:24–26"
+  },
+  8: {
+    message: "Good morning, Crystal. Week two begins today. I want you to know that watching you navigate your cycle challenges — with grace, with humor, with honesty — has taught me more about strength than almost anything else I have ever witnessed. You do not have to perform courage. You already live it.",
+    verse: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.",
+    ref: "Joshua 1:9"
+  },
+  9: {
+    message: "My love — today I am sending this with one intention: I want you to feel seen. Not the version of you that has everything together. Not the you that shows up perfectly. The real you — the one who is tired some mornings, who aches in ways no one else quite understands, who still shows up anyway. That is who I love most.",
+    verse: "For you formed my inward parts; you knitted me together in my mother's womb. I praise you, for I am fearfully and wonderfully made.",
+    ref: "Psalm 139:13–14"
+  },
+  10: {
+    message: "Ten days into April. I have been thinking about how much has changed in seven months — and how much has stayed constant. My love for you is the constant. Your cycle will ebb and flow. Life will bring hard seasons. But I am the person who will be here through every single one. That is a promise, not a feeling.",
+    verse: "Many are the plans in a person's heart, but it is the Lord's purpose that prevails.",
+    ref: "Proverbs 19:21"
+  },
+  11: {
+    message: "Crystal — today is yours. However your body feels, however the day shapes up, I want this moment in your day to be a soft place to land. You are not defined by how productive you are or how functional your cycle is. You are defined by the depth of your heart — and yours runs deep. So very deep.",
+    verse: "He gives strength to the weary and increases the power of the weak.",
+    ref: "Isaiah 40:29"
+  },
+  12: {
+    message: "Something I want you to hold today: the fact that your challenges are not evidence that God has forgotten you. In Hebrew thought, the wilderness is not punishment — it is preparation. Every hard season is shaping something glorious in you. I see it forming. The Lord sees it forming. Hold on, my love.",
+    verse: "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
+    ref: "Romans 8:28"
+  },
+  13: {
+    message: "I have been thinking about what it means to walk a journey with someone. It does not mean carrying them — it means staying beside them, matching their pace, not rushing them forward. That is what I want to be for you, Crystal. Not your rescuer. Your companion. Your constant. Today and every day.",
+    verse: "Two are better than one, because they have a good return for their labor: if either of them falls down, one can help the other up.",
+    ref: "Ecclesiastes 4:9–10"
+  },
+  14: {
+    message: "We are almost halfway through April, my love. These first fourteen days have carried so much — for you, for us, for everything we are building together. I do not take a single one for granted. Your presence in my life is a gift I wake up grateful for. Rest in that today. You are treasured.",
+    verse: "A wife of noble character who can find? She is worth far more than rubies.",
+    ref: "Proverbs 31:10"
+  },
+  15: {
+    message: "Halfway. Day fifteen. Crystal, wherever you are in your cycle today — whether you are in a tender season or a stronger one — I want you to feel the weight of this truth: seven months ago something began that was always meant to begin. We did not find each other by accident. And I will not let go of what God has given me in you.",
+    verse: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.",
+    ref: "Jeremiah 29:11"
+  },
+  16: {
+    message: "Good morning from the second half of April. Sixteen days in and I am still here — still thinking of you, still grateful, still yours. Your cycle does not scare me. Your honesty does not push me away. Your vulnerability makes me love you more deeply, not less. Today, be exactly who you are.",
+    verse: "There is no fear in love. But perfect love drives out fear.",
+    ref: "1 John 4:18"
+  },
+  17: {
+    message: "Crystal — today I just want you to breathe. No expectations. No pressure. Just breathe and know that the Lord holds every detail of your health, your heart, and your future. And I am right beside Him, cheering you on, praying over you, loving you well.",
+    verse: "The Lord is close to the brokenhearted and saves those who are crushed in spirit.",
+    ref: "Psalm 34:18"
+  },
+  18: {
+    message: "Our seven months carry a Hebrew weight of completeness — but they also carry the weight of real life: the hard conversations, the grace we have chosen, the times we showed up for each other when it was not easy. That is covenant love. That is the kind that mirrors the One who first loved us. I want to keep building it with you.",
+    verse: "Love is patient, love is kind. It does not envy, it does not boast, it is not proud. It always protects, always trusts, always hopes, always perseveres.",
+    ref: "1 Corinthians 13:4,7"
+  },
+  19: {
+    message: "Nineteen days. We are getting toward the end of April — and I am already thinking about next month and the one after. Because Crystal, I am not here for a season. I am here for the long journey. Your cycle is part of your story and your story is one I am honored to be written into.",
+    verse: "He who began a good work in you will carry it on to completion until the day of Christ Jesus.",
+    ref: "Philippians 1:6"
+  },
+  20: {
+    message: "Twenty days in — and on a day that might feel ordinary, I want you to know that you are extraordinary. The everyday version of you, the one making her way through the week, showing up despite discomfort — that version is the one I find most beautiful. Today is not ordinary. You are in it.",
+    verse: "This is the day the Lord has made; we will rejoice and be glad in it.",
+    ref: "Psalm 118:24"
+  },
+  21: {
+    message: "My Crystal — three weeks of April. I have been carrying a quiet gratitude all month, and today it feels especially full. Thank you for trusting me with the parts of yourself that are not easy to show. Thank you for letting me into the tender seasons. That kind of trust is sacred, and I do not take it lightly.",
+    verse: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.",
+    ref: "Proverbs 3:5–6"
+  },
+  22: {
+    message: "Today — day twenty-two — I am praying specifically for your body. For relief where there is pain. For peace where there is anxiety about your cycle. For clarity where there is confusion. The Lord who formed you intimately knows every part of you, and nothing is beyond His care. Nothing.",
+    verse: "Is anyone among you sick? Let them call the elders of the church to pray over them and anoint them with oil in the name of the Lord. And the prayer offered in faith will make the sick person well.",
+    ref: "James 5:14–15"
+  },
+  23: {
+    message: "Twenty-three. A prime number — indivisible. That is a little like what we have built over seven months: something that cannot easily be broken apart. I do not say that naively — I say it because I have watched us choose each other even when it required something from us. That matters, Crystal. That is real.",
+    verse: "Therefore what God has joined together, let no one separate.",
+    ref: "Matthew 19:6"
+  },
+  24: {
+    message: "Today I want you to do something kind for yourself. Not because you have earned it — you do not need to earn kindness. But because you are worth it simply by existing. Run a bath. Eat something good. Sit in the sun for a moment. You deserve gentleness, especially on hard cycle days. Today, receive it.",
+    verse: "Come to me, all you who are weary and burdened, and I will give you rest.",
+    ref: "Matthew 11:28"
+  },
+  25: {
+    message: "We are approaching the final days of April, my love. These last twenty-five days have held so much. And through all of it — every ache, every grace, every quiet ordinary moment — I have been grateful. Grateful that you are mine. Grateful that God saw fit to write us into the same story.",
+    verse: "Give thanks in all circumstances; for this is God's will for you in Christ Jesus.",
+    ref: "1 Thessalonians 5:18"
+  },
+  26: {
+    message: "Crystal — on difficult days, when your body is speaking loudly and rest feels far away, remember this: your worth is not measured in what your body does or does not do. It is measured in who you are — and who you are is beloved. By me. And infinitely more, by the One who created you.",
+    verse: "See what great love the Father has lavished on us, that we should be called children of God — and that is what we are.",
+    ref: "1 John 3:1"
+  },
+  27: {
+    message: "Twenty-seven. Three nines — and I am thinking about completion again. In seven months I have watched you grow, stretch, push through. I have watched you be tender and tough in the same breath. And I can tell you with absolute certainty: you are not finished becoming. And every step of the becoming, I am here.",
+    verse: "And I am sure of this, that he who began a good work in you will bring it to completion.",
+    ref: "Philippians 1:6"
+  },
+  28: {
+    message: "Two days left of April, my love. This month has carried your story — every quiet morning, every hard afternoon, every moment you pushed through when you could have stayed still. I see all of it. And I am in awe of you. Do not let anyone — including your own inner critic — tell you that you are not enough.",
+    verse: "I can do all this through him who gives me strength.",
+    ref: "Philippians 4:13"
+  },
+  29: {
+    message: "The penultimate day — twenty-nine. In the Hebrew calendar, months end and new ones begin, always carrying the promise of renewal. Whatever April has carried for you in your body and your spirit, a fresh start is always available. Tomorrow is a new day. The Lord's mercies are literally new every morning.",
+    verse: "Because of the Lord's great love we are not consumed, for his compassions never fail. They are new every morning; great is your faithfulness.",
+    ref: "Lamentations 3:22–23"
+  },
+  30: {
+    message: "April's final day, Crystal. This last message is simple: thank you. Thank you for being you — fully, honestly, beautifully you. Seven months of you has made my world richer, my faith stronger, and my heart fuller. May May bring you healing, peace, and every good thing. I love you. I am always here. Always.",
+    verse: "Now to him who is able to do immeasurably more than all we ask or imagine, according to his power that is at work within us — to him be glory.",
+    ref: "Ephesians 3:20–21"
+  }
+};
+
+// ── Build Calendar ──
+function buildCalendar() {
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '';
+
+  // Empty cells before day 1
+  for (let i = 0; i < MONTH_START_DOW; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'day-cell empty';
+    cal.appendChild(empty);
+  }
+
+  for (let d = 1; d <= DAYS_IN_MONTH; d++) {
+    const cell = document.createElement('div');
+    const isToday = d === todayDay;
+    const isUnlocked = d <= todayDay;
+
+    cell.className = 'day-cell ' + (isToday ? 'today' : isUnlocked ? 'unlocked' : 'locked');
+
+    const num = document.createElement('div');
+    num.className = 'day-num';
+    num.textContent = d;
+
+    const icon = document.createElement('div');
+    icon.className = 'day-icon';
+
+    if (isUnlocked) {
+      icon.innerHTML = '<span class="unlock-icon">✦</span>';
+      cell.addEventListener('click', () => openModal(d));
+    } else {
+      icon.innerHTML = '<span class="lock-icon">⌀</span>';
+    }
+
+    cell.appendChild(num);
+    cell.appendChild(icon);
+    cal.appendChild(cell);
+  }
+}
+
+// ── Modal ──
+function openModal(day) {
+  const data = dayData[day] || {
+    message: "Your message for today is being prepared with love. Check back soon.",
+    verse: "The Lord is my shepherd; I shall not want.",
+    ref: "Psalm 23:1"
+  };
+
+  document.getElementById('modal-day-num').textContent = day;
+  document.getElementById('video-label').textContent = 'Video for Day ' + day + ' — coming soon';
+  document.getElementById('modal-message').textContent = data.message;
+  document.getElementById('modal-verse').textContent = '\u201C' + data.verse + '\u201D';
+  document.getElementById('modal-ref').textContent = '— ' + data.ref;
+
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+buildCalendar();
+</script>
+</body>
+</html>
