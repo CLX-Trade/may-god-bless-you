@@ -378,7 +378,7 @@
   .video-zone {
     background: var(--navy-mid);
     border-radius: 8px;
-    aspect-ratio: 16/9;
+    aspect-ratio: 9/16; max-height: 480px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     margin-bottom: 1.75rem;
@@ -410,6 +410,13 @@
     border-top: 8px solid transparent;
     border-bottom: 8px solid transparent;
     margin-left: 3px;
+  }
+
+  .day-video {
+    width: 100%; height: 100%;
+    border-radius: 8px;
+    object-fit: contain; background: #1A1F2E;
+    display: block;
   }
 
   /* ── Message ── */
@@ -555,8 +562,11 @@
     </div>
     <div class="modal-body">
       <div class="video-zone" id="video-zone">
-        <div class="video-play-icon"></div>
-        <p class="video-placeholder-text" id="video-label">Video for Day 1</p>
+        <video id="day-video" class="day-video" controls style="display:none;"></video>
+        <div id="video-placeholder-inner">
+          <div class="video-play-icon"></div>
+          <p class="video-placeholder-text" id="video-label">Video coming soon</p>
+        </div>
       </div>
       <div class="message-section">
         <div class="message-label">A word for today</div>
@@ -608,6 +618,7 @@ const todayDay = (today.getFullYear() === 2026 && today.getMonth() === 3) ? toda
 
 const dayData = {
   1: {
+    video: null,
     message: "My Crystal — welcome to Day 1 of April. These seven months together have been nothing short of sacred to me. In Hebrew, the number seven — שֶׁבַע (sheva) — represents completion and divine perfection. That is exactly what you are to me: a completeness I did not know I was missing. Your cycle can be hard some days, and I want you to know I see you through every single one of them. You are not too much. You are exactly enough.",
     verse: "The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing.",
     ref: "Zephaniah 3:17"
@@ -678,6 +689,7 @@ const dayData = {
     ref: "Proverbs 31:10"
   },
   15: {
+    video: 'day-15.mp4',
     message: "Halfway. Day fifteen. Crystal, wherever you are in your cycle today — whether you are in a tender season or a stronger one — I want you to feel the weight of this truth: seven months ago something began that was always meant to begin. We did not find each other by accident. And I will not let go of what God has given me in you.",
     verse: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.",
     ref: "Jeremiah 29:11"
@@ -801,16 +813,33 @@ function buildCalendar() {
 // ── Modal ──
 function openModal(day) {
   const data = dayData[day] || {
+    video: null,
     message: "Your message for today is being prepared with love. Check back soon.",
     verse: "The Lord is my shepherd; I shall not want.",
     ref: "Psalm 23:1"
   };
 
   document.getElementById('modal-day-num').textContent = day;
-  document.getElementById('video-label').textContent = 'Video for Day ' + day + ' — coming soon';
+
+  const videoEl = document.getElementById('day-video');
+  const placeholder = document.getElementById('video-placeholder-inner');
+  if (data.video) {
+    videoEl.src = data.video;
+  videoEl.load();
+    videoEl.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    videoEl.src = '';
+    videoEl.style.display = 'none';
+    placeholder.style.display = 'flex';
+    placeholder.style.flexDirection = 'column';
+    placeholder.style.alignItems = 'center';
+    document.getElementById('video-label').textContent = 'Video for Day ' + day + ' — coming soon';
+  }
+
   document.getElementById('modal-message').textContent = data.message;
   document.getElementById('modal-verse').textContent = '\u201C' + data.verse + '\u201D';
-  document.getElementById('modal-ref').textContent = '— ' + data.ref;
+  document.getElementById('modal-ref').textContent = '\u2014 ' + data.ref;
 
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow = 'hidden';
